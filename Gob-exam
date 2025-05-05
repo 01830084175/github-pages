@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Job Quiz Master</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #e0f7fa, #fff);
+      padding: 20px;
+      max-width: 700px;
+      margin: auto;
+    }
+    .quiz-box {
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+    }
+    h2 {
+      color: #333;
+    }
+    button {
+      display: block;
+      margin-top: 10px;
+      padding: 10px;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      width: 100%;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      font-size: 16px;
+    }
+    button:hover {
+      background-color: #45a049;
+    }
+    button.correct {
+      background-color: #28a745 !important;
+    }
+    button.wrong {
+      background-color: #dc3545 !important;
+    }
+    #timer {
+      font-size: 18px;
+      font-weight: bold;
+      color: #ff5722;
+      margin-bottom: 10px;
+    }
+    #loader {
+      text-align: center;
+      font-size: 18px;
+      color: #ff5722;
+    }
+    #feedback {
+      font-size: 16px;
+      font-weight: bold;
+      margin-top: 10px;
+    }
+    .review-item {
+      margin-top: 15px;
+      border-top: 1px solid #ddd;
+      padding-top: 10px;
+    }
+    .correct-answer {
+      color: green;
+      font-weight: bold;
+    }
+    .wrong-answer {
+      color: red;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+
+<div class="quiz-box">
+  <div id="loader">লোড হচ্ছে...</div>
+  <div id="timer">টাইমার: ২০</div>
+  <h2 id="question">লোড হচ্ছে...</h2>
+  <div id="options"></div>
+  <p id="feedback"></p>
+  <p id="score"></p>
+</div>
+
+<div id="review" class="quiz-box" style="display:none; margin-top:20px;"></div>
+
+<script>
+const quiz = [
+  {
+    question: "বাংলাদেশের রাজধানী কোনটি?",
+    options: ["চট্টগ্রাম", "রাজশাহী", "ঢাকা", "খুলনা"],
+    answer: "ঢাকা"
+  },
+  {
+    question: "সংবিধান অনুযায়ী বাংলাদেশের রাষ্ট্রভাষা কী?",
+    options: ["ইংরেজি", "বাংলা", "উর্দু", "আরবি"],
+    answer: "বাংলা"
+  },
+  {
+    question: "গতিসূত্র আবিষ্কার করেন?",
+    options: ["আইনস্টাইন", "নিউটন", "গ্যালিলিও", "হকিং"],
+    answer: "নিউটন"
+  }
+];
+
+let current = 0;
+let score = 0;
+let timer;
+let timeLeft = 20;
+let userAnswers = [];
+
+function startTimer() {
+  timeLeft = 20;
+  document.getElementById("timer").innerText = "টাইমার: " + timeLeft;
+  timer = setInterval(() => {
+    timeLeft--;
+    document.getElementById("timer").innerText = "টাইমার: " + timeLeft;
+    if (timeLeft <= 0) {
+      clearInterval(timer);
+      showAnswer(null);
+    }
+  }, 1000);
+}
+
+function loadQuestion() {
+  document.getElementById("loader").style.display = "none"; // Hide loader
+  if (current >= quiz.length) {
+    showFinalScore();
+    return;
+  }
+
+  let q = quiz[current];
+  document.getElementById("question").innerText = q.question;
+  document.getElementById("timer").style.display = "block";
+  document.getElementById("feedback").innerText = "";
+  document.getElementById("score").innerText = "";
+
+  let optionsHtml = "";
+  q.options.forEach(option => {
+    optionsHtml += `<button onclick="checkAnswer(this, '${option}')">${option}</button>`;
+  });
+
+  document.getElementById("options").innerHTML = optionsHtml;
+  startTimer();
+}
+
+function checkAnswer(btn, selected) {
+  clearInterval(timer);
+  showAnswer(selected, btn);
+}
+
+function showAnswer(selected, btn = null) {
+  const q = quiz[current];
+  const buttons = document.querySelectorAll("#options button");
+  const feedback = document.getElementById("feedback");
+
+  buttons.forEach(b => {
+    if (b.innerText === q.answer) {
+      b.classList.add("correct");
+    } else if (b.innerText === selected) {
+      b.classList.add("wrong");
+    }
+    b.disabled = true;
+  });
+
+  let resultText = "";
+  let isCorrect = false;
+
+  if (selected === q.answer) {
+    score++;
+    resultText = "সঠিক উত্তর!";
+    feedback.style.color = "#28a745";
+    isCorrect = true;
+  } else if (selected === null) {
+    resultText = "সময় শেষ! সঠিক উত্তর: " + q.answer;
+    feedback.style.color = "#ff9800";
+  } else {
+    resultText = "ভুল উত্তর! সঠিক উত্তর: " + q.answer;
+    feedback.style.color = "#dc3545";
+  }
+
+  feedback.innerText = resultText;
+
+  userAnswers.push({
+    question: q.question,
+    correctAnswer: q.answer,
+    yourAnswer: selected || "সময় শেষ",
+    isCorrect: isCorrect
+  });
+
+  setTimeout(() => {
+    current++;
+    loadQuestion();
+  }, 2000);
+}
+
+function showFinalScore() {
+  document.getElementById("question").innerText = "কুইজ শেষ! আপনার স্কোর: " + score + "/" + quiz.length;
+  document.getElementById("options").innerHTML = "";
+  document.getElementById("timer").style.display = "none";
+  document.getElementById("feedback").innerText = "";
+
+  let reviewHtml = "<h2>আপনার উত্তর রিভিউ:</h2>";
+  userAnswers.forEach((item, index) => {
+    reviewHtml += `
+      <div class="review-item">
+        <p><strong>প্রশ্ন ${index + 1}:</strong> ${item.question}</p>
+        <p>আপনার উত্তর: <span class="${item.isCorrect ? 'correct-answer' : 'wrong-answer'}">${item.yourAnswer}</span></p>
+        ${!item.isCorrect ? `<p>সঠিক উত্তর: <span class="correct-answer">${item.correctAnswer}</span></p>` : ""}
+      </div>
+    `;
+  });
+
+  const reviewDiv = document.getElementById("review");
+  reviewDiv.innerHTML = reviewHtml;
+  reviewDiv.style.display = "block";
+}
+
+loadQuestion();
+</script>
+
+</body>
+</html>
